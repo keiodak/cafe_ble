@@ -3,7 +3,7 @@
 A small, plain firmware for the ESP32 inside the **Ciat-Lonbarde Cafe / Cafeteria** — a starting point for anyone
 who wants to build their own presets or talk to the Cafe over **Bluetooth LE**.
 
-- Two presets: **COCO_MOD** (a looper) and **ECHO** (a four-tap echo with an organ on YELLOW).
+- Two presets: **COCO_OG** (the Cocoquantus coco, a looper) and **ECHO** (the original firmware's four-tap echo).
 - **Bluetooth only when you ask for it**: hold BUTTON while the Cafe powers on. Otherwise it behaves exactly like
   the original firmware (radio off).
 - About 1200 lines in five files. Everything the presets do not use has been taken out.
@@ -27,14 +27,17 @@ who wants to build their own presets or talk to the Cafe over **Bluetooth LE**.
 
 ## Playing it
 
-| | COCO_MOD (1) | ECHO (2) |
+| | COCO_OG (1) | ECHO (2) |
 |---|---|---|
-| main out / ASH | the tape | the wet echo |
-| YELLOW | a clock from the loop | an organ (5 octaves of squares) |
-| EARTH | record on / off (as a switch) | the organ's pitch (FLIP: PITCH → RING → OFF) |
-| SKIP | back to the loop point | wobble on / off |
-| FLIP | backwards | (see EARTH) |
-| BUTTON (short) | freeze | freeze |
+| main out | the tape | the four taps |
+| ASH | the tape (DC blocked, ×2 into a limiter) | EARTH, passed through (as the original) |
+| YELLOW | the play head's address in binary (sounds like an organ) | the taps' places in binary |
+| EARTH | record on / off (as a switch) | — (to ASH) |
+| SKIP | back to the loop point (where SKIP went high) | — |
+| FLIP | backwards | backwards |
+| BUTTON (short) | freeze (crossfaded) | freeze (crossfaded) |
+
+ECHO is the original firmware's `echo()` as it was; COCO_OG is Apple π's `coco_og()` (its Cocoquantus v2 coco).
 
 **Changing preset:** long-press BUTTON (the lamp flickers), tap it N times, long-press again. The lamp blinks the
 number.
@@ -57,7 +60,7 @@ Any BLE UART app works for trying it (nRF Connect, LightBlue, Bluefruit Connect 
 |---|---|
 | `P` | `HELLO cafe-ble <version> <name> ota` |
 | `H` | free heap, MTU, connection interval, EARTH, the preset |
-| `G 0` / `G 1` | go to COCO_MOD / ECHO |
+| `G 0` / `G 1` | go to COCO_OG / ECHO |
 | `U <size> <crc32 hex>` | start a firmware update (see `ota_cmd`) |
 
 **Adding a command:** a new `case` in `pc_line()` (`cafe_ble.ino`). It runs in `loop()`, not in the audio
@@ -109,9 +112,9 @@ this firmware does the following. Without it, it does exactly what the original 
 ## Credits
 
 - The original Cafe firmware and hardware: **Peter Blasser, Ciat-Lonbarde** — the hardware setup (`setup.h`, most
-  of `initDEL`) and ECHO's four taps are his.
-- **Apple π** by ieat31415 (alternative Cafe firmware): COCO_MOD, the BUTTON menu, the ASH and YELLOW writers.
-- Cut down, Bluetooth, the firmware update and ECHO's organ: k.odk.
+  of `initDEL`), ECHO, the tape's packing and its crossfade are his.
+- **Apple π** by ieat31415 (alternative Cafe firmware): COCO_OG, the BUTTON menu, the ASH writer.
+- Cut down, Bluetooth and the firmware update: k.odk.
 
 The parts above come from those projects, which do not state a license. If you build on this, credit them as above.
 

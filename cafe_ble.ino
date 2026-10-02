@@ -6,8 +6,8 @@
 // CAFE BLE (k.odk) — a small, plain starting point for the Ciat-Lonbarde Cafe's ESP32, for anyone who wants to build
 // on it: two presets and an optional Bluetooth LE link, nothing else.
 //
-//   PRESETS   1 COCO_MOD (coco: a looper; EARTH = record, YELLOW = a clock)
-//             2 ECHO     (four-tap echo; YELLOW = an organ, EARTH = its pitch, FLIP deeper, SKIP wobble)
+//   PRESETS   1 COCO_OG  (Apple π's original-Cocoquantus coco: a looper; EARTH = record, YELLOW = the head in binary)
+//             2 ECHO     (the original firmware's four-tap echo; ASH = EARTH passed through)
 //             BUTTON menu as on Apple π: long-press, tap N times, long-press again (the lamp blinks the number).
 //
 //   BLUETOOTH is off unless BUTTON is held down while the Cafe powers on (~0.3 s). Then:
@@ -17,7 +17,7 @@
 //             - it advertises as "Cafe-XXXX" with the Nordic UART Service (6E400001-…); one text line per command:
 //                 P            -> "HELLO cafe-ble <version> <name> ota"
 //                 H            -> heap, link, EARTH
-//                 G <0|1>      -> go to COCO_MOD / ECHO
+//                 G <0|1>      -> go to COCO_OG / ECHO
 //                 U …          -> firmware update over Bluetooth (6E400004-…, see ota_cmd; Partition Scheme: Default)
 //             Add your own commands in pc_line().
 //           Without Bluetooth everything is as the original firmware: radio clocks off, EARTH read every sample.
@@ -160,7 +160,7 @@ void pc_out(const char *s) { ble_line(s); }       // replies go out as notificat
 // ------------------------------------------
 // THE PRESETS (pool ids 0, 1 — the BUTTON menu and "G <n>" use these)
 // ------------------------------------------
-void (*pool[])() = { coco_mod, echo_og };
+void (*pool[])() = { coco_og, echo };
 #define POOL_N ((int)(sizeof(pool) / sizeof(pool[0])))
 
 // ==========================================

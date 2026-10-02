@@ -22,7 +22,7 @@ volatile int earth_raw12 = 0;
 static inline void earth_fifo() {
   if (cafe_no_ble) { int r = (REG(I2S_FIFO_RD_REG)[0] & 0x7FF) << 1; earth_raw12 = r; earth_now = r >> 4; }
 }
-volatile int earth_last_state = 0;                        // EARTH as a switch (COCO_MOD: record on / off)
+volatile int earth_last_state = 0;                        // EARTH as a switch (COCO_OG: record on / off)
 const int TRIGGER_ON_THRESHOLD = 100;                     // (a 4 V midpoint, for a 2 V – 6 V LFO)
 const int TRIGGER_OFF_THRESHOLD = 85;
 
@@ -80,40 +80,10 @@ inline void write_ash_compressed(int raw_val) {
 }
 #define ASHWRITER(a) write_ash_compressed(a)
 
-#define YELLOW_MASK (BIT(12) | BIT(13) | BIT(14) | BIT(15) | BIT(16) | BIT(17) | BIT(21) | BIT(22) | BIT(26) | BIT(27))
-// YELLOW as a rough DAC: 0..4095 -> how many of its ten pins are on (dithered)
-inline void write_yellow_audio(int raw_val) {
-    static int32_t yellow_error = 0;
-    
-    // TPDF Dither
-    int32_t dither = (rand() & 127) - (rand() & 127);
-    int32_t target = raw_val + dither + yellow_error;
-    
-    // Map 12 bit audio (4095 steps) to 10 hardware pins (4095 / 10 = ~409)
-    int32_t pins_on = target / 409;
-    
-    if (pins_on > 10) pins_on = 10;
-    if (pins_on < 0) pins_on = 0;
-    
-    // Save discarded remainder
-    yellow_error = target - (pins_on * 409);
-    
-    uint32_t mask = 0;
-    if (pins_on >= 1) mask |= BIT(12);
-    if (pins_on >= 2) mask |= BIT(13);
-    if (pins_on >= 3) mask |= BIT(14);
-    if (pins_on >= 4) mask |= BIT(15);
-    if (pins_on >= 5) mask |= BIT(16);
-    if (pins_on >= 6) mask |= BIT(17);
-    if (pins_on >= 7) mask |= BIT(21);
-    if (pins_on >= 8) mask |= BIT(22);
-    if (pins_on >= 9) mask |= BIT(26);
-    if (pins_on >= 10) mask |= BIT(27);
-    
-    REG(GPIO_OUT_W1TC_REG)[0] = YELLOW_MASK;
-    REG(GPIO_OUT_W1TS_REG)[0] = mask;
-}
-#define YELLOW_AUDIO(a) write_yellow_audio(a)
+// YELLOW: its ten pins as a binary number (the original's "YELLOWERS": a play head's address sounds like an organ)
+#define YELLOW_BINARY(b) REG(GPIO_OUT_REG)[0] = ((uint32_t)(b) << 12);
+// ASH written straight (0..255), as the original
+#define ASH_RAW(a) REG(ESP32_RTCIO_PAD_DAC1)[0] = BIT(10) | BIT(17) | BIT(18) | (((a) & 0xFF) << 19);
 
 // =========================================================
 // PRESETS AND THE BUTTON
@@ -192,7 +162,7 @@ void IRAM_ATTR doubleclicker() {
 uint8_t *dchunk[DCHUNKS];
 RTC_NOINIT_ATTR static uint8_t dchunk_rtc[DCHUNK_BYTES];
 static int t;                                             // the head
-static int delayskp;                                      // COCO_MOD: the loop point (SKIP)
+static int delayskp;                                      // COCO_OG: the loop point (SKIP)
 static int lastskp;
 int gyo;                                                  // the input, this sample
 volatile int pout;                                        // the main out, this sample
@@ -216,6 +186,24 @@ void IRAM_ATTR dwrite(int ptr, int val) {                 // write a sample (0..
   dp[(ptr >> 1) + 1 - biz] &= (uint8_t)(0xF << (4 - forsh));
   dp[(ptr >> 1) + 1 - biz] |= (uint8_t)((val & 0xF) << forsh);
 }
+// the original's tape access: read a sample, and record over it unless frozen ("but") — with a short crossfade
+// (CROSSFADE samples) when the recording stops or starts, so the loop point is not a click
+#define CROSSBITE 8
+#define CROSSFADE (1 << (CROSSBITE))
+int xfado = 0;                                            // fading the recording out (freezing)
+int yfado = 0;                                            // fading it back in
+#define TRIGGER_CROSSFADE(is_freezing) \
+  if (is_freezing) { if (xfado == 0) xfado = CROSSFADE; } \
+  else { if (yfado == 0) yfado = CROSSFADE; }
+int IRAM_ATTR dellius(int ptr, int val, bool but) {
+  int zut = dread(ptr);
+  if ((!but) || (but && (xfado > 0))) {
+    if (xfado > 0) { val = (val * xfado) >> CROSSBITE; val += (zut * (CROSSFADE - xfado)) >> CROSSBITE; xfado--; }
+    if (yfado > 0) { val = (val * (CROSSFADE - yfado)) >> CROSSBITE; val += (zut * yfado) >> CROSSBITE; yfado--; }
+    dwrite(ptr, val);
+  }
+  return zut;
+}
 #define FILLNOISE for (int i = 0; i < DELAYSIZE; i++) dwrite(i, rand() & 4095);
 
 // the tape, then the hardware: the ADC (initDIG, setup.h), the codec on SPI3, the pins
@@ -227,7 +215,7 @@ void initDEL() {
     Serial.printf("FATAL: no memory for the tape (free %u, largest %u)\n", (unsigned)heap_caps_get_free_size(MALLOC_CAP_8BIT), (unsigned)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
     while (1) { REG(GPIO_OUT1_W1TS_REG)[0] = BIT(1); delay(50); REG(GPIO_OUT1_W1TC_REG)[0] = BIT(1); delay(50); }
   }
-  t = 0;
+  t = 0; xfado = 0; yfado = 0;
 
   REG(ESP32_SENS_SAR_DAC_CTRL1)
   [0] = 0x0;
