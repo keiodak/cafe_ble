@@ -11,7 +11,7 @@
 //             BUTTON menu as on Apple π: long-press, tap N times, long-press again (the lamp blinks the number).
 //
 //   BLUETOOTH is off unless BUTTON is held down while the Cafe powers on (~0.3 s). Then:
-//             - the radio is started first, then the Cafe's own setup (see BLE.md in the repository for why)
+//             - the radio is started first, then the Cafe's own setup (see README.md for why)
 //             - EARTH (GPIO 4 = ADC2 ch 0) is read by the IDF driver from a timer on core 0, 2000x a second;
 //               the sound's DMA pattern table runs on ADC1 only (the radio takes ADC2)
 //             - it advertises as "Cafe-XXXX" with the Nordic UART Service (6E400001-…); one text line per command:
