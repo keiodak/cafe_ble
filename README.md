@@ -71,6 +71,9 @@ Keep it short. It runs on core 1; Bluetooth runs on core 0.
 
 ## What it took to fit Bluetooth around the Cafe's sound
 
+**The detailed story and the wiring as it is now — the two cores, the GATT service, the update protocol:**
+[BLE.md](BLE.md) · 日本語：[BLE_ja.md](BLE_ja.md)
+
 The original firmware owns the ESP32 completely: it programs the I2S, the SAR ADCs and the timers by register,
 makes the whole sound in one interrupt, and turns the radio's clocks off. With Bluetooth on (`cafe_no_ble = false`)
 this firmware does the following. Without it, it does exactly what the original does.
@@ -132,6 +135,6 @@ spiffs」、ライブラリ NimBLE-Arduino。`cafe_ble.ino` を開いて USB で
 
 **Bluetooth を入れるために変えた点**：無線を先に起動する、無線のクロックを切らない、timer group 0 をリセット
 しない、変換表を ADC1 だけにして EARTH（ADC2）はドライバ経由で core 0 から読む、テープを 1.5KB × 128 に分けて
-確保する。詳しくは上の英語の説明を見てください。
+確保する。経緯と今のつながり方の詳しい説明は [BLE_ja.md](BLE_ja.md) にあります。
 
 **クレジット**：オリジナル（Peter Blasser / Ciat-Lonbarde）、Apple π（ieat31415）、k.odk。
