@@ -1,7 +1,7 @@
 # How Bluetooth got through — and how it is connected now
 
 This is the long version of the Bluetooth part of [README.md](README.md): what stood in the way, what was done
-about each thing, and how the pieces are wired together in this firmware. (日本語: [BLE_ja.md](BLE_ja.md))
+about each thing, and how the pieces are wired together in this firmware.
 
 ## 1. Why it was hard
 

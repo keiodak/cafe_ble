@@ -8,7 +8,6 @@ who wants to build their own presets or talk to the Cafe over **Bluetooth LE**.
   the original firmware (radio off).
 - About 1200 lines in five files. Everything the presets do not use has been taken out.
 
-日本語の概要は[下](#日本語)にあります。
 
 ---
 
@@ -72,7 +71,7 @@ Keep it short. It runs on core 1; Bluetooth runs on core 0.
 ## What it took to fit Bluetooth around the Cafe's sound
 
 **The detailed story and the wiring as it is now — the two cores, the GATT service, the update protocol:**
-[BLE.md](BLE.md) · 日本語：[BLE_ja.md](BLE_ja.md)
+[BLE.md](BLE.md)
 
 The original firmware owns the ESP32 completely: it programs the I2S, the SAR ADCs and the timers by register,
 makes the whole sound in one interrupt, and turns the radio's clocks off. With Bluetooth on (`cafe_no_ble = false`)
@@ -116,25 +115,3 @@ this firmware does the following. Without it, it does exactly what the original 
 
 The parts above come from those projects, which do not state a license. If you build on this, credit them as above.
 
----
-
-## 日本語
-
-Ciat-Lonbarde Cafe の ESP32 用の小さなファームウェアです。自分でプリセットを作ったり、Bluetooth LE で Cafe
-と話したりするための出発点として作りました。
-
-- プリセットは **COCO_MOD**（ルーパー）と **ECHO**（4タップのエコー、YELLOW にオルガン）の2つ
-- **BUTTON を押したまま電源を入れたときだけ Bluetooth が起動**します。普通に起動するとオリジナルと同じです
-- 全部で約1200行。使わない部分は取り除いてあります
-
-**書き込み**：Arduino IDE、ボード「ESP32 Dev Module」、ESP32 core 2.0.9、Partition Scheme「Default 4MB with
-spiffs」、ライブラリ NimBLE-Arduino。`cafe_ble.ino` を開いて USB で書き込みます。
-
-**Bluetooth**：Nordic UART Service（`6E400001-…`）。`P`（バージョン）、`H`（状態）、`G 0` / `G 1`（プリセット）、
-`U …`（ファーム更新）。コマンドは `pc_line()` に、プリセットは `synths.h` と `pool[]` に足します。
-
-**Bluetooth を入れるために変えた点**：無線を先に起動する、無線のクロックを切らない、timer group 0 をリセット
-しない、変換表を ADC1 だけにして EARTH（ADC2）はドライバ経由で core 0 から読む、テープを 1.5KB × 128 に分けて
-確保する。経緯と今のつながり方の詳しい説明は [BLE_ja.md](BLE_ja.md) にあります。
-
-**クレジット**：オリジナル（Peter Blasser / Ciat-Lonbarde）、Apple π（ieat31415）、k.odk。
